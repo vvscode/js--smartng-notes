@@ -22,7 +22,7 @@ angular.module('LfDemoApp', [])
                     boundingRect.zoom = ev.target.getZoom();
                     boundingRect.latitude = center.lat;
                     boundingRect.longitude = center.lng;
-                    scope.$apply();
+                    scope.$applyAsync();
                 };
 
                 map.on({
