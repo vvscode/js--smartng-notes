@@ -5,7 +5,7 @@ angular.module('LfDemoApp', [])
             restrict: 'E',
             scope: {
                 reports: '=',
-                boundingRect: '@'
+                boundingRect: '='
             },
             link: function postLink(scope, $el, $attrs) {
                 console.log(scope.reports);
@@ -31,12 +31,16 @@ angular.module('LfDemoApp', [])
                     moveend: updateBoundingRect
                 });
 
+                scope.$watch('boundingRect', function(newVal){
+                    map.setView([newVal.latitude, newVal.longitude], newVal.zoom);
+                }, true);
+
+                // update report markers
                 var clearReportMarkers = function() {
                     reportMarkers.forEach((marker) => map.removeLayer(marker));
                     reportMarkers.length = 0;
                 };
 
-                // update report markers
                 var addReportMarkers = function(reports) {
                     (reports || []).forEach((report) => {
                         var marker = L.marker([report.latitude, report.longitude]);

@@ -10,9 +10,9 @@
 </head>
 <body>
 <div class="map-wrapper" ng-controller="DemoMapCtrl as demoMapCtrl">
-    Lat: {{demoMapCtrl.boundingRect.latitude}}<br />
-    Lng: {{demoMapCtrl.boundingRect.longitude}}<br />
-    Zoom:{{demoMapCtrl.boundingRect.zoom}}
+    Lat: <input ng-model="demoMapCtrl.boundingRect.latitude" type="number"/><br />
+    Lng: <input ng-model="demoMapCtrl.boundingRect.longitude" type="number"/><br />
+    Zoom:<input ng-model="demoMapCtrl.boundingRect.zoom" type="number"/>
     <button ng-click="demoMapCtrl.refresh()">Refresh</button>
     <leaflet-map bounding-rect="demoMapCtrl.boundingRect" reports="demoMapCtrl.reports"></leaflet-map>
 </div>
