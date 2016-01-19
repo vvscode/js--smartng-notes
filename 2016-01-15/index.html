@@ -5,17 +5,26 @@
     <title>LF-map</title>
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
     <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+    <script src="https://rawgit.com/Leaflet/Leaflet.heat/gh-pages/dist%2Fleaflet-heat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="map-wrapper" ng-controller="DemoMapCtrl as demoMapCtrl">
-    Lat: <input ng-model="demoMapCtrl.boundingRect.latitude" type="number"/><br />
-    Lng: <input ng-model="demoMapCtrl.boundingRect.longitude" type="number"/><br />
-    Zoom:<input ng-model="demoMapCtrl.boundingRect.zoom" type="number"/>
-    <button ng-click="demoMapCtrl.refresh()">Refresh</button>
-    <leaflet-map bounding-rect="demoMapCtrl.boundingRect" reports="demoMapCtrl.reports"></leaflet-map>
-    <leaflet-map bounding-rect="demoMapCtrl.boundingRect" reports="demoMapCtrl.reports"></leaflet-map>
+    <table>
+    <tr><td>Lat: </td><td><input ng-model="demoMapCtrl.boundingRect.latitude" type="number"/></td></tr>
+    <tr><td>Lng: </td><td><input ng-model="demoMapCtrl.boundingRect.longitude" type="number"/></td></tr>
+    <tr><td>Zoom:</td><td><input ng-model="demoMapCtrl.boundingRect.zoom" type="number"/></td></tr>
+    <tr><td>Mode:</td><td><select ng-model="demoMapCtrl.mapMode">
+        <option>normal</option>
+        <option>heatmap</option>
+    </select></td></tr>
+    <tr><td></td><td><button ng-click="demoMapCtrl.refresh()">Renerate random reports</button></td></tr>
+    </table>
+    <leaflet-map
+            bounding-rect="demoMapCtrl.boundingRect"
+            reports="demoMapCtrl.reports"
+            mode="{{demoMapCtrl.mapMode}}" />
 </div>
 <script src="script.js"></script>
 </body>
