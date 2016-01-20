@@ -91,7 +91,6 @@ angular.module('LfDemoApp', [])
                     currentMapMode = newCurrentMapMode;
                 }, true);
 
-
                 // update bounding rect
                 var updateBoundingRect = function(ev) {
                     var center = ev.target.getCenter();

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SmartJS.Academy - Тест scopes</title>
+  <link href="style.css" rel="stylesheet" type="text/css">
+  <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.0-rc.0/angular.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.1/moment.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.0.0/lodash.js"></script>
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+  <script src="storage.service.js"></script>
+  <script src="size.directive.js"></script>
+  <script src="modal.service.js"></script>
+
+</head>
+<body ng-app="test">
+  {{ now }}
+  <br/>
+  <size></size>
+  <br/>
+  Редактирование списка сотрудников {{companyName}}
+  <button ng-click="showPopup()">Попап</button>
+  <div ng-if="unsaved">ЕСТЬ НЕСОХРАНЕННЫЕ ДАННЫЕ</div>
+  <div class="show-scope-demo">
+  <div ng-controller="ListController as list">
+    <ol>
+      <li ng-repeat="name in list.names">
+        <input type="text" ng-model="name">
+        <button ng-if="!$last" ng-click="list.down($index)">down</button>
+        <button ng-if="!$first" ng-click="list.up($index)">up</button>
+      </li>
+    </ol>
+  </div>
+</div>
+</body>
+</html>
