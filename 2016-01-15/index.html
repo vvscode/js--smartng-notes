@@ -26,7 +26,10 @@
                     <tr><td>Position:</td><td><input ng-model="demoMapCtrl.mode.options.position" disabled="true"/></td></tr>
                     <tr><td colspan="2">
                         from 0 to {{demoMapCtrl.maxStepNumber}}<br />
-                        <input style="width: 100%;" type="range" min="0" max="{{demoMapCtrl.maxStepNumber}}"  ng-model="demoMapCtrl.mode.options.position" />
+                        <input style="width: 100%;" type="range" min="0" max="{{demoMapCtrl.maxStepNumber}}"  ng-model="demoMapCtrl.mode.options.position" /><br />
+                        <button ng-click="demoMapCtrl.mode.options.isPlaying = !demoMapCtrl.mode.options.isPlaying">
+                            {{demoMapCtrl.mode.options.isPlaying ? 'Stop' : 'Play'}}
+                        </button>
                     </td></tr>
                 </table>
             </td>

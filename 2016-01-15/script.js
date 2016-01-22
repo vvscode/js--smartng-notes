@@ -159,8 +159,9 @@ angular.module('LfDemoApp', [])
             }
         };
     })
-    .controller('DemoMapCtrl', function($scope, ReportsLoader, ReportsUtils) {
+    .controller('DemoMapCtrl', function($scope, $interval, ReportsLoader, ReportsUtils) {
         this.allReports = [];
+        this._animationDelay = 500;
         this.boundingRect = {
             latitude: 20,
             longitude: 20,
@@ -169,7 +170,7 @@ angular.module('LfDemoApp', [])
         this.mode = {
             type: 'normal',
             options: {
-                size: 3650, // 10 years
+                size: 365, // 10 years
                 isPlaying: false,
                 position: 0
             }
@@ -177,9 +178,22 @@ angular.module('LfDemoApp', [])
 
         this.recalculateStepsNumber = () => this.maxStepNumber = ReportsUtils.getStepsCount(this.allReports, this.mode.options.size) - 1;
         this.updatePositionReports = () => this.reports = ReportsUtils.getStepReports(this.allReports, this.mode.options.size, this.mode.options.position);
+        this.stopAnimation = () => $interval.cancel(this._animationTimer);
+        this.startAnimation = () => {
+            this.stopAnimation();
+            this._animationTimer  = $interval(() => {
+                this.mode.options.position++;
+                if(this.mode.options.position >= (this.maxStepNumber + 1)){
+                    $interval.cancel(this._animationTimer);
+                }
+            }, this._animationDelay);
+        };
 
         $scope.$watch(() => this.mode.options.size, () => this.recalculateStepsNumber());
         $scope.$watch(() => this.mode.options.position, () => this.updatePositionReports());
+        $scope.$watch(() => this.mode.options.isPlaying, (newValue) => {
+            this[newValue ? 'startAnimation' : 'stopAnimation']();
+        });
 
         ReportsLoader.loadReports().then((reports) => {
             this.allReports = reports;
