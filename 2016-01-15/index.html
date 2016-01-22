@@ -11,20 +11,35 @@
 </head>
 <body>
 <div class="map-wrapper" ng-controller="DemoMapCtrl as demoMapCtrl">
-    <table>
-    <tr><td>Lat: </td><td><input ng-model="demoMapCtrl.boundingRect.latitude" type="number"/></td></tr>
-    <tr><td>Lng: </td><td><input ng-model="demoMapCtrl.boundingRect.longitude" type="number"/></td></tr>
-    <tr><td>Zoom:</td><td><input ng-model="demoMapCtrl.boundingRect.zoom" type="number"/></td></tr>
-    <tr><td>Mode:</td><td><select ng-model="demoMapCtrl.mapMode">
-        <option>normal</option>
-        <option>heatmap</option>
-    </select></td></tr>
-    <tr><td></td><td><button ng-click="demoMapCtrl.refresh()">Renerate random reports</button></td></tr>
+    <table style="width: 100%;">
+        <tr>
+            <td style="width: 50%; vertical-align: top;">
+                <table>
+                    <tr><td>Lat: </td><td><input ng-model="demoMapCtrl.boundingRect.latitude" type="number"/></td></tr>
+                    <tr><td>Lng: </td><td><input ng-model="demoMapCtrl.boundingRect.longitude" type="number"/></td></tr>
+                    <tr><td>Zoom:</td><td><input ng-model="demoMapCtrl.boundingRect.zoom" type="number"/></td></tr>
+                    <tr><td>Mode:</td><td><select ng-model="demoMapCtrl.mode.type">
+                        <option>normal</option>
+                        <option>heatmap</option>
+                    </select></td></tr>
+                    <tr><td>Size:</td><td><input ng-model="demoMapCtrl.mode.options.size" type="number"/></td></tr>
+                    <tr><td>Position:</td><td><input ng-model="demoMapCtrl.mode.options.position" disabled="true"/></td></tr>
+                    <tr><td colspan="2">
+                        from 0 to {{demoMapCtrl.maxSteps}}<br />
+                        <input style="width: 100%;" type="range" min="0" max="{{demoMapCtrl.maxSteps}}"  ng-model="demoMapCtrl.mode.options.position" />
+                    </td></tr>
+                </table>
+            </td>
+            <td style="width: 50%;">
+                <div style="width: 600px; height: 400px;">
+                    <leaflet-map
+                            bounding-rect="demoMapCtrl.boundingRect"
+                            reports="demoMapCtrl.reports"
+                            mode="demoMapCtrl.mode" />
+                </div>
+            </td>
+        </tr>
     </table>
-    <leaflet-map
-            bounding-rect="demoMapCtrl.boundingRect"
-            reports="demoMapCtrl.reports"
-            mode="{{demoMapCtrl.mapMode}}" />
 </div>
 <script src="script.js"></script>
 </body>

@@ -1,4 +1,28 @@
 angular.module('LfDemoApp', [])
+    .service('ReportsLoader', function($http) {
+        this.loadReports = function() {
+            return $http.get('http://notification.systems/api/filterReports', {
+                headers: {'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.IjUzZjMzYzhkMjk0N2NkNDU2ZmI5NGJjMyI.jY0oeE2D3-D14d6Z2WqILKfWR5PTduau6R492czGJ80'}
+            }).then((resp) => {
+                var reports = resp.data.reports;
+                reports.forEach((report) => report.date = new Date(report.date));
+                reports.sort((a, b) => (+a.date > +b.date) ? 1 : (+a.date === +b.date) ? 0 : -1);
+                return reports;
+            });
+        }
+    })
+    .service('ReportsUtils', function() {
+        this.getStepsCount = function(reports, size) {
+            var steps = 0;
+            const reportsCount = reports.length;
+            if(reportsCount) {
+                var minDate = reports[0].date;
+                var maxDate = reports[reportsCount - 1].date;
+                steps = Math.ceil((+maxDate - +minDate)/((size || 1)*24*60*60*1000));
+            }
+            return steps;
+        };
+    })
     .directive('leafletMap', function() {
         return {
             template: '<div class="map"></div>',
@@ -6,7 +30,7 @@ angular.module('LfDemoApp', [])
             scope: {
                 reports: '=',
                 boundingRect: '=',
-                mode: '@'
+                mode: '='
             },
             link: function postLink(scope, $el, $attrs) {
                 var boundingRect = scope.boundingRect;
@@ -30,7 +54,7 @@ angular.module('LfDemoApp', [])
                         },
                         addReportMarkers(reports) {
                             (reports || [])
-                            .map((report) => [report.latitude, report.longitude])
+                            .map((report) => [report.location.latitude, report.location.longitude])
                             .forEach((markerLatLng) => {
                                 var marker = L.marker(markerLatLng);
                                 map.addLayer(marker);
@@ -61,7 +85,7 @@ angular.module('LfDemoApp', [])
                             this.heatLayer.setLatLngs(
                                 (reports || [])
                                 .map((report) => {
-                                    var markerLatLng = [report.latitude, report.longitude];
+                                    var markerLatLng = [report.location.latitude, report.location.longitude];
                                     var marker = L.marker(markerLatLng);
                                     reportMarkers.push(marker);
                                     return markerLatLng;
@@ -79,11 +103,11 @@ angular.module('LfDemoApp', [])
                         }
                     }
                 };
-                var currentMapMode = MAP_MODES[scope.mode] || MAP_MODES.normal;
+                var currentMapMode = MAP_MODES[scope.mode.type] || MAP_MODES.normal;
                 currentMapMode.init();
 
                 scope.$watch('mode', function(newVal){
-                    var newCurrentMapMode = MAP_MODES[scope.mode] || MAP_MODES.normal;
+                    var newCurrentMapMode = MAP_MODES[scope.mode.type] || MAP_MODES.normal;
                     if(newCurrentMapMode !== currentMapMode) {
                         currentMapMode.destruct();
                         newCurrentMapMode.init();
@@ -123,31 +147,28 @@ angular.module('LfDemoApp', [])
             }
         };
     })
-    .controller('DemoMapCtrl', function($http) {
+    .controller('DemoMapCtrl', function($scope, ReportsLoader, ReportsUtils) {
         this.reports = [];
         this.boundingRect = {
             latitude: 20,
             longitude: 20,
             zoom: 5
         };
-        this.mapMode = 'normal';
-
-        this.refresh = function() {
-            var reports = [];
-            for(var i = 0; i<100; i++) {
-                reports.push({
-                    latitude: this.boundingRect.latitude + Math.random() * 10,
-                    longitude: this.boundingRect.longitude + Math.random() * 10
-                });
+        this.mode = {
+            type: 'normal',
+            options: {
+                size: 365,
+                isPlaying: false,
+                position: 0
             }
-            this.reports = reports;
         };
 
-        $http.get('http://notification.systems/api/filterReports', {
-            headers: {'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.IjUzZjMzYzhkMjk0N2NkNDU2ZmI5NGJjMyI.jY0oeE2D3-D14d6Z2WqILKfWR5PTduau6R492czGJ80'}
-        }).then((resp) => {
-            this.reports = resp.data.reports.map((item) => item.location);
-        });
+        this.recalculateStepsNumber = () => this.maxSteps = ReportsUtils.getStepsCount(this.reports, this.mode.options.size);
 
-        window.cboundingRect = this.boundingRect;
+        $scope.$watch(() => this.mode.options.size, () => this.recalculateStepsNumber());
+
+        ReportsLoader.loadReports().then((reports) => {
+            this.reports = reports;
+            this.recalculateStepsNumber();
+        });
     });
