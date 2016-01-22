@@ -12,15 +12,27 @@ angular.module('LfDemoApp', [])
         }
     })
     .service('ReportsUtils', function() {
-        this.getStepsCount = function(reports, size) {
-            var steps = 0;
+        this._getDateRange = function(reports) {
             const reportsCount = reports.length;
-            if(reportsCount) {
-                var minDate = reports[0].date;
-                var maxDate = reports[reportsCount - 1].date;
-                steps = Math.ceil((+maxDate - +minDate)/((size || 1)*24*60*60*1000));
+            if(!reportsCount) {
+                return [0, 0];
             }
-            return steps;
+            var minDate = reports[0].date;
+            var maxDate = reports[reportsCount - 1].date;
+            return [minDate, maxDate];
+        };
+        this.getStepsCount = function(reports, size) {
+            var dateRange = this._getDateRange(reports);
+            return Math.ceil((+dateRange[1] - +dateRange[0])/((size || 1)*24*60*60*1000));
+        };
+        this.getStepReports = function(reports, size, stepNumber) {
+            var dateRange = this._getDateRange(reports);
+            var stepsCount = this.getStepsCount(reports, size);
+            var stepRange = (+dateRange[1] - +dateRange[0]) / stepsCount;
+            var minStepDateTime = +dateRange[0] + stepNumber * stepRange;
+            var maxStepDateTime = minStepDateTime + stepRange;
+            var ret = reports.filter((report) => ((+report.date >= minStepDateTime) && (+report.date < maxStepDateTime)));
+            return ret;
         };
     })
     .directive('leafletMap', function() {
@@ -148,7 +160,7 @@ angular.module('LfDemoApp', [])
         };
     })
     .controller('DemoMapCtrl', function($scope, ReportsLoader, ReportsUtils) {
-        this.reports = [];
+        this.allReports = [];
         this.boundingRect = {
             latitude: 20,
             longitude: 20,
@@ -157,18 +169,21 @@ angular.module('LfDemoApp', [])
         this.mode = {
             type: 'normal',
             options: {
-                size: 365,
+                size: 3650, // 10 years
                 isPlaying: false,
                 position: 0
             }
         };
 
-        this.recalculateStepsNumber = () => this.maxSteps = ReportsUtils.getStepsCount(this.reports, this.mode.options.size);
+        this.recalculateStepsNumber = () => this.maxStepNumber = ReportsUtils.getStepsCount(this.allReports, this.mode.options.size) - 1;
+        this.updatePositionReports = () => this.reports = ReportsUtils.getStepReports(this.allReports, this.mode.options.size, this.mode.options.position);
 
         $scope.$watch(() => this.mode.options.size, () => this.recalculateStepsNumber());
+        $scope.$watch(() => this.mode.options.position, () => this.updatePositionReports());
 
         ReportsLoader.loadReports().then((reports) => {
-            this.reports = reports;
+            this.allReports = reports;
             this.recalculateStepsNumber();
+            this.updatePositionReports();
         });
     });
