@@ -184,7 +184,7 @@ angular.module('LfDemoApp', [])
             this._animationTimer  = $interval(() => {
                 this.mode.options.position++;
                 if(this.mode.options.position >= (this.maxStepNumber + 1)){
-                    $interval.cancel(this._animationTimer);
+                    this.stopAnimation();
                 }
             }, this._animationDelay);
         };
