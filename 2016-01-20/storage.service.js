@@ -1,13 +1,13 @@
-angular.module('test').provider('storageService', function () {
+angular.module('test').provider('storageService', function() {
   var key = 'data';
-  
-  this.setKey = function (newKey) {
+
+  this.setKey = function(newKey) {
     key = newKey;
   };
-  
-  this.$get = function () {
+
+  this.$get = function() {
     return {
-      load: function () {
+      load: function() {
         console.log(localStorage);
         var data = localStorage.getItem(key);
         if (data) {
@@ -16,8 +16,8 @@ angular.module('test').provider('storageService', function () {
           return ['Иванов', 'Петров', 'Сидоров'];
         }
       },
-      
-      save: function (data) {
+
+      save: function(data) {
         localStorage.setItem(key, JSON.stringify(data));
       }
     };

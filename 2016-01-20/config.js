@@ -1,3 +1,2 @@
 angular.module('appConfig', [])
-  .constant('companyName', 'SMARTJS')
-;
+  .constant('companyName', 'SMARTJS');
