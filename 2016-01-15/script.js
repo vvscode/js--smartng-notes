@@ -13,6 +13,7 @@ angular.module('LfDemoApp', [])
     })
     .service('ReportsUtils', function() {
         this._getDateRange = function(reports) {
+            reports = reports || [];
             const reportsCount = reports.length;
             if(!reportsCount) {
                 return [0, 0];
@@ -22,10 +23,12 @@ angular.module('LfDemoApp', [])
             return [minDate, maxDate];
         };
         this.getStepsCount = function(reports, size) {
+            reports = reports || [];
             var dateRange = this._getDateRange(reports);
             return Math.ceil((+dateRange[1] - +dateRange[0])/((size || 1)*24*60*60*1000));
         };
         this.getStepReports = function(reports, size, stepNumber) {
+            reports = reports || [];
             var dateRange = this._getDateRange(reports);
             var stepsCount = this.getStepsCount(reports, size);
             var stepRange = (+dateRange[1] - +dateRange[0]) / stepsCount;
@@ -40,12 +43,32 @@ angular.module('LfDemoApp', [])
             template: '<div class="map"></div>',
             restrict: 'E',
             scope: {
-                reports: '=',
+                allReports: '=reports',
                 boundingRect: '=',
                 mode: '='
             },
-            link: function postLink(scope, $el, $attrs) {
-                var boundingRect = scope.boundingRect;
+            controller: function($interval, ReportsUtils) {
+                this._animationTimer = null;
+                this.reports = [];
+                this._animationDelay = 200;
+
+                this.stopAnimation = () => $interval.cancel(this._animationTimer);
+                this.startAnimation = () => {
+                    this.stopAnimation();
+                    this._animationTimer  = $interval(() => {
+                        this.mode.options.position++;
+                        if(this.mode.options.position >= (this.maxStepNumber + 1)){
+                            this.stopAnimation();
+                        }
+                    }, this._animationDelay);
+                };
+                this.recalculateStepsNumber = () => this.maxStepNumber = ReportsUtils.getStepsCount(this.allReports, this.mode.options.size) - 1;
+                this.updatePositionReports = () => this.reports = ReportsUtils.getStepReports(this.allReports, this.mode.options.size, this.mode.options.position);
+            },
+            controllerAs: 'leafletMapCtrl',
+            bindToController: true,
+            link: function postLink(scope, $el, $attrs, leafletMapCtrl) {
+                var boundingRect = leafletMapCtrl.boundingRect;
                 var zoom = boundingRect.zoom || 13;
                 var lat = boundingRect.latitude || 50;
                 var lng = boundingRect.longitude || 50;
@@ -115,17 +138,8 @@ angular.module('LfDemoApp', [])
                         }
                     }
                 };
-                var currentMapMode = MAP_MODES[scope.mode.type] || MAP_MODES.normal;
+                var currentMapMode = MAP_MODES[leafletMapCtrl.mode.type] || MAP_MODES.normal;
                 currentMapMode.init();
-
-                scope.$watch('mode', function(newVal){
-                    var newCurrentMapMode = MAP_MODES[scope.mode.type] || MAP_MODES.normal;
-                    if(newCurrentMapMode !== currentMapMode) {
-                        currentMapMode.destruct();
-                        newCurrentMapMode.init();
-                    }
-                    currentMapMode = newCurrentMapMode;
-                }, true);
 
                 // update bounding rect
                 var updateBoundingRect = function(ev) {
@@ -142,20 +156,41 @@ angular.module('LfDemoApp', [])
                     moveend: updateBoundingRect
                 });
 
-                scope.$watch('boundingRect', function(newVal){
+                L.tileLayer('http://otile1.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.png', {
+                    id: 'examples.map-9ijuk24y'
+                }).addTo(map);
+
+                scope.$watch('leafletMapCtrl.mode', function(newVal){
+                    var newCurrentMapMode = MAP_MODES[leafletMapCtrl.mode.type] || MAP_MODES.normal;
+                    if(newCurrentMapMode !== currentMapMode) {
+                        currentMapMode.destruct();
+                        newCurrentMapMode.init();
+                    }
+                    currentMapMode = newCurrentMapMode;
+                }, true);
+
+                scope.$watch('leafletMapCtrl.boundingRect', function(newVal){
                     map.setView([newVal.latitude, newVal.longitude], newVal.zoom);
                 }, true);
 
                 // update report markers
-                scope.$watch('reports', function(newReports, oldReports) {
+                scope.$watch('leafletMapCtrl.allReports', function(newReports, oldReports) {
+                    leafletMapCtrl.recalculateStepsNumber();
+                    leafletMapCtrl.updatePositionReports();
+                });
+
+                scope.$watch('leafletMapCtrl.reports', function(newReports, oldReports) {
                     currentMapMode.clearReportMarkers();
                     reports = newReports;
                     currentMapMode.addReportMarkers(newReports);
                 });
 
-                L.tileLayer('http://otile1.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.png', {
-                    id: 'examples.map-9ijuk24y'
-                }).addTo(map);
+                scope.$watch(() => leafletMapCtrl.mode.options.isPlaying, (newValue) => {
+                    leafletMapCtrl[newValue ? 'startAnimation' : 'stopAnimation']();
+                });
+
+                scope.$watch(() => leafletMapCtrl.mode.options.size, () => leafletMapCtrl.recalculateStepsNumber());
+                scope.$watch(() => leafletMapCtrl.mode.options.position, () => leafletMapCtrl.updatePositionReports());
             }
         };
     })
@@ -176,28 +211,8 @@ angular.module('LfDemoApp', [])
             }
         };
 
-        this.recalculateStepsNumber = () => this.maxStepNumber = ReportsUtils.getStepsCount(this.allReports, this.mode.options.size) - 1;
-        this.updatePositionReports = () => this.reports = ReportsUtils.getStepReports(this.allReports, this.mode.options.size, this.mode.options.position);
-        this.stopAnimation = () => $interval.cancel(this._animationTimer);
-        this.startAnimation = () => {
-            this.stopAnimation();
-            this._animationTimer  = $interval(() => {
-                this.mode.options.position++;
-                if(this.mode.options.position >= (this.maxStepNumber + 1)){
-                    this.stopAnimation();
-                }
-            }, this._animationDelay);
-        };
-
-        $scope.$watch(() => this.mode.options.size, () => this.recalculateStepsNumber());
-        $scope.$watch(() => this.mode.options.position, () => this.updatePositionReports());
-        $scope.$watch(() => this.mode.options.isPlaying, (newValue) => {
-            this[newValue ? 'startAnimation' : 'stopAnimation']();
-        });
-
         ReportsLoader.loadReports().then((reports) => {
             this.allReports = reports;
-            this.recalculateStepsNumber();
-            this.updatePositionReports();
+            this.maxStepNumber = ReportsUtils.getStepsCount(this.allReports, this.mode.options.size) - 1;
         });
     });
